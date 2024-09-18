@@ -15,7 +15,7 @@ import sys
 import time
 from copy import deepcopy
 from pprint import pprint
-from urllib.request import URLError
+from urllib.request import URLError, Request
 from urllib.request import urlopen as _urlopen
 
 from bs4 import BeautifulSoup
@@ -107,9 +107,11 @@ class Chapter:
 
     def get_page(self):
         if self.url.startswith('http'):
-            return urlopen(self.url, timeout=5)
+            req = Request(self.url, headers=USER_AGENT)
+            return urlopen(req, timeout=5)
         else:
-            return urlopen('https://wanderinginn.com/' + self.url, timeout=5)
+            req = Request('https://wanderinginn.com/' + self.url, headers=USER_AGENT)
+            return urlopen(req, timeout=5)
 
     def save(self, stream=sys.stdout, strip_color=False, image_path='./images'):
         p = self.get_page()
@@ -155,7 +157,8 @@ class Chapter:
                     pass
             if img_filename:
                 with open(os.path.join(image_path, img_filename), 'wb') as fo:
-                    fo.write(urlopen(img['src'], timeout=10, context=ssl.create_default_context()).read())
+                    req = Request(img['src'], headers=USER_AGENT)
+                    fo.write(urlopen(req, timeout=5, context=ssl.create_default_context()).read())
                 img['src'] = os.path.join(image_path, img_filename)
             else:
                 print(f'Removing image: unable to determine filename:\n\t{img}')
@@ -253,9 +256,11 @@ def parse_args():
         urlopen = RateLimited(_urlopen, limit=args.rate_limit)
     return args
 
+USER_AGENT = {'user-agent': "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0"}
 
 def get_toc(toc_url=r'https://wanderinginn.com/table-of-contents/'):
-    page = urlopen(toc_url)
+    req = Request(toc_url, headers = USER_AGENT)
+    page = urlopen(req)
     soup = BeautifulSoup(page, 'lxml')
 
     toc = []
@@ -416,6 +421,7 @@ def main():
                 title=args.title,
                 strip_color=args.strip_color,
                 )
+        pprint(ebook_data)
         gen = OPFGenerator(ebook_data)
         gen.createEBookFile(os.path.join(args.build_dir, f'{ebook_data["title"]}.epub'))
 
