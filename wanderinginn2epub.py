@@ -79,7 +79,6 @@ class RateLimited:
 # Replace urlopen with a rate limited version:
 urlopen = RateLimited(_urlopen)
 
-
 class Chapter:
     _HTML_HEADER = '''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11\
     /DTD/xhtml11.dtd">
@@ -221,7 +220,7 @@ def parse_args():
     parser.add_argument('--rate-limit',
                         dest='rate_limit',
                         type=int,
-                        default=None,
+                        default=2,
                         help='Delay in seconds imposed between urlopen calls to prevent hitting site rate limit',
                         )
 
@@ -251,9 +250,9 @@ def parse_args():
                               )
 
     args = parser.parse_args()
-    if args.rate_limit:
-        global urlopen
-        urlopen = RateLimited(_urlopen, limit=args.rate_limit)
+    global urlopen
+    urlopen = RateLimited(_urlopen, limit=args.rate_limit)
+
     return args
 
 USER_AGENT = {'user-agent': "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0"}
